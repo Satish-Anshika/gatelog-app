@@ -1,5 +1,7 @@
-/* student.js - Student Dashboard Logic */
-document.addEventListener('DOMContentLoaded', () => {
+/* student.js - Student Dashboard Logic (Firebase) */
+import DB from './db.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
     const currentUser = DB.getCurrentUser();
     if (!currentUser || currentUser.role !== 'student') {
         window.location.href = 'index.html';
@@ -13,18 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
         DB.logout();
     });
 
-    function renderParcels() {
-        const allParcels = DB.getParcels();
-        // Filter parcels for the logged-in student (using phone number as identifier)
-        const studentParcels = allParcels.filter(p => p.phone === currentUser.phone);
-        
-        const pendingContainer = document.getElementById('student-parcels');
-        const historyContainer = document.getElementById('student-history');
-        
+    async function renderParcels() {
+        const studentParcels = await DB.getParcelsByPhone(currentUser.phone);
+
+        const pendingContainer  = document.getElementById('student-parcels');
+        const historyContainer  = document.getElementById('student-history');
+
         pendingContainer.innerHTML = '';
         historyContainer.innerHTML = '';
 
-        const pending = studentParcels.filter(p => p.status === 'pending');
+        const pending   = studentParcels.filter(p => p.status === 'pending');
         const delivered = studentParcels.filter(p => p.status === 'delivered');
 
         if (pending.length === 0) {
@@ -38,8 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h3 class="golden-text">Arrived at ${p.gate}</h3>
                         <span class="badge badge-warning">Pending Collection</span>
                     </div>
-                    <p style="font-size:0.9rem; color:var(--text-muted);">Please show this barcode to security at the gate.</p>
-                    
+                    <p style="font-size:0.9rem; color:var(--text-muted);">Show this barcode to security at the gate.</p>
                     <div class="barcode-container mt-2">
                         <div class="barcode-lines"></div>
                         <div class="barcode-text">${p.barcodeId}</div>

@@ -1,5 +1,7 @@
-/* security.js - Security Dashboard Logic */
-document.addEventListener('DOMContentLoaded', () => {
+/* security.js - Security Dashboard Logic (Firebase) */
+import DB from './db.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
     const currentUser = DB.getCurrentUser();
     if (!currentUser || currentUser.role !== 'security') {
         window.location.href = 'index.html';
@@ -12,9 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const parcelsList = document.getElementById('parcels-list');
-    
-    function renderParcels() {
-        const parcels = DB.getParcels().filter(p => p.status === 'pending');
+
+    async function renderParcels() {
+        const allParcels = await DB.getParcels();
+        const parcels = allParcels.filter(p => p.status === 'pending');
         parcelsList.innerHTML = '';
 
         if (parcels.length === 0) {
@@ -31,39 +34,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="badge badge-warning">${p.gate}</span>
                 </div>
                 <p><strong>Phone:</strong> ${p.phone}</p>
+                <p><strong>Barcode:</strong> ${p.barcodeId}</p>
                 <p><strong>Date LOG:</strong> ${new Date(p.date).toLocaleString()}</p>
-                <p class="mt-1" style="font-size: 0.8rem; color: var(--text-muted);">Awaiting Pickup</p>
+                <p class="mt-1" style="font-size:0.8rem; color:var(--text-muted);">Awaiting Pickup</p>
             `;
             parcelsList.appendChild(card);
         });
     }
 
-    // Add Parcel
-    document.getElementById('add-parcel-form').addEventListener('submit', (e) => {
+    // ─── ADD PARCEL ────────────────────────────────────────────
+    document.getElementById('add-parcel-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const phone = document.getElementById('parcel-phone').value.trim();
-        const name = document.getElementById('parcel-name').value.trim();
-        const gate = document.getElementById('parcel-gate').value;
+        const name  = document.getElementById('parcel-name').value.trim();
+        const gate  = document.getElementById('parcel-gate').value;
         const msgDiv = document.getElementById('parcel-msg');
 
-        // Note: For simplicity, we just add the parcel using phone as the primary lookup.
-        const parcels = DB.getParcels();
-        
-        // Generate a random Barcode ID for pickup verify
         const barcodeId = 'BAR-' + DB.generateId().substring(1, 7).toUpperCase();
-
         const newParcel = {
             id: DB.generateId(),
-            phone: phone,
+            phone,
             studentName: name,
-            gate: gate,
-            status: 'pending', // 'pending' or 'delivered'
+            gate,
+            status: 'pending',
             date: new Date().toISOString(),
-            barcodeId: barcodeId
+            barcodeId
         };
 
-        parcels.push(newParcel);
-        DB.setParcels(parcels);
+        await DB.addParcel(newParcel);
 
         msgDiv.textContent = `Parcel logged successfully at ${gate}!`;
         msgDiv.className = 'alert alert-success';
@@ -74,21 +72,21 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => msgDiv.classList.add('hidden'), 3000);
     });
 
-    // Verify Parcel
-    document.getElementById('verify-parcel-form').addEventListener('submit', (e) => {
+    // ─── VERIFY PICKUP ─────────────────────────────────────────
+    document.getElementById('verify-parcel-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const barcode = document.getElementById('verify-barcode').value.trim();
-        const msgDiv = document.getElementById('verify-msg');
+        const msgDiv  = document.getElementById('verify-msg');
 
-        const parcels = DB.getParcels();
-        const index = parcels.findIndex(p => p.barcodeId === barcode && p.status === 'pending');
+        const parcel = await DB.findParcelByBarcode(barcode);
 
-        if (index > -1) {
-            parcels[index].status = 'delivered';
-            parcels[index].deliveredDate = new Date().toISOString();
-            DB.setParcels(parcels);
+        if (parcel) {
+            await DB.updateParcel(parcel.id, {
+                status: 'delivered',
+                deliveredDate: new Date().toISOString()
+            });
 
-            msgDiv.textContent = `Success! Parcel for ${parcels[index].studentName} marked as delivered.`;
+            msgDiv.textContent = `Success! Parcel for ${parcel.studentName} marked as delivered.`;
             msgDiv.className = 'alert alert-success';
             document.getElementById('verify-parcel-form').reset();
             renderParcels();
@@ -96,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             msgDiv.textContent = "Invalid or expired Barcode.";
             msgDiv.className = 'alert alert-error';
         }
+
         msgDiv.classList.remove('hidden');
         setTimeout(() => msgDiv.classList.add('hidden'), 3000);
     });

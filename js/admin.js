@@ -1,5 +1,7 @@
-/* admin.js - Admin Dashboard Logic */
-document.addEventListener('DOMContentLoaded', () => {
+/* admin.js - Admin Dashboard Logic (Firebase) */
+import DB from './db.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
     const currentUser = DB.getCurrentUser();
     if (!currentUser || currentUser.role !== 'admin') {
         window.location.href = 'index.html';
@@ -11,18 +13,18 @@ document.addEventListener('DOMContentLoaded', () => {
         DB.logout();
     });
 
-    function renderUsers() {
-        const users = DB.getUsers();
-        const pendingContainer = document.getElementById('pending-users-list');
+    async function renderUsers() {
+        const users = await DB.getUsers();
+        const pendingContainer  = document.getElementById('pending-users-list');
         const approvedContainer = document.getElementById('approved-users-list');
-        
-        pendingContainer.innerHTML = '';
+
+        pendingContainer.innerHTML  = '';
         approvedContainer.innerHTML = '';
 
         let pendingCount = 0;
 
         users.forEach(user => {
-            if (user.role === 'admin') return; // Don't show admin in these lists
+            if (user.role === 'admin') return;
 
             const card = document.createElement('div');
             card.className = 'card';
@@ -40,8 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const actions = document.createElement('div');
                 actions.className = 'mt-2 flex justify-between';
                 actions.innerHTML = `
-                    <button class="btn-primary btn-small mr-1" onclick="approveUser('${user.id}')" style="width: 48%;">Approve</button>
-                    <button class="btn-secondary btn-small" onclick="rejectUser('${user.id}')" style="width: 48%; border-color: var(--error); color: var(--error);">Reject</button>
+                    <button class="btn-primary btn-small mr-1" data-approve="${user.id}" style="width:48%;">Approve</button>
+                    <button class="btn-secondary btn-small" data-reject="${user.id}" style="width:48%; border-color:var(--error); color:var(--error);">Reject</button>
                 `;
                 card.appendChild(actions);
                 pendingContainer.appendChild(card);
@@ -54,24 +56,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pendingCount === 0) {
             pendingContainer.innerHTML = '<p class="text-muted">No pending approvals.</p>';
         }
+
+        // Attach button listeners
+        document.querySelectorAll('[data-approve]').forEach(btn => {
+            btn.addEventListener('click', () => approveUser(btn.dataset.approve));
+        });
+        document.querySelectorAll('[data-reject]').forEach(btn => {
+            btn.addEventListener('click', () => rejectUser(btn.dataset.reject));
+        });
     }
 
-    window.approveUser = function(userId) {
-        const users = DB.getUsers();
-        const index = users.findIndex(u => u.id === userId);
-        if (index > -1) {
-            users[index].status = 'approved';
-            DB.setUsers(users);
-            renderUsers();
-        }
-    };
-
-    window.rejectUser = function(userId) {
-        const users = DB.getUsers();
-        const newUsers = users.filter(u => u.id !== userId);
-        DB.setUsers(newUsers);
+    async function approveUser(userId) {
+        await DB.updateUser(userId, { status: 'approved' });
         renderUsers();
-    };
+    }
+
+    async function rejectUser(userId) {
+        await DB.deleteUser(userId);
+        renderUsers();
+    }
 
     renderUsers();
 });

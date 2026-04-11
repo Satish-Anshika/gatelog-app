@@ -1,44 +1,125 @@
-/* db.js - State Management Simulation */
+/* db.js - Firebase Firestore Data Layer */
+import { db } from './firebase-config.js';
+import {
+    collection, doc, getDocs, addDoc, updateDoc,
+    deleteDoc, query, where, setDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const initialUsers = [
-    { id: 'admin1', phone: '0000000000', password: 'admin', role: 'admin', status: 'approved', name: 'Super Admin', idCard: 'ADMIN001' }
-];
+// ─── COLLECTIONS ───────────────────────────────────────────────
+const USERS_COL     = 'users';
+const PARCELS_COL   = 'parcels';
+const LOSTFOUND_COL = 'lostFound';
 
-function initDB() {
-    if (!localStorage.getItem('users')) {
-        localStorage.setItem('users', JSON.stringify(initialUsers));
-    }
-    if (!localStorage.getItem('parcels')) {
-        localStorage.setItem('parcels', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('lostFound')) {
-        localStorage.setItem('lostFound', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('currentUser')) {
-        localStorage.setItem('currentUser', null);
+// ─── SEED ADMIN (run once on first load) ───────────────────────
+async function seedAdmin() {
+    const adminRef = doc(db, USERS_COL, 'admin1');
+    const adminSnap = await getDoc(adminRef);
+    if (!adminSnap.exists()) {
+        await setDoc(adminRef, {
+            id: 'admin1',
+            phone: '0000000000',
+            password: 'admin',
+            role: 'admin',
+            status: 'approved',
+            name: 'Super Admin',
+            idCard: 'ADMIN001'
+        });
     }
 }
+seedAdmin();
 
-// Init immediately
-initDB();
-
-const DB = {
-    getUsers: () => JSON.parse(localStorage.getItem('users')),
-    setUsers: (users) => localStorage.setItem('users', JSON.stringify(users)),
-    
-    getParcels: () => JSON.parse(localStorage.getItem('parcels')),
-    setParcels: (parcels) => localStorage.setItem('parcels', JSON.stringify(parcels)),
-    
-    getLostFound: () => JSON.parse(localStorage.getItem('lostFound')),
-    setLostFound: (items) => localStorage.setItem('lostFound', JSON.stringify(items)),
-    
-    getCurrentUser: () => JSON.parse(localStorage.getItem('currentUser')),
-    setCurrentUser: (user) => localStorage.setItem('currentUser', JSON.stringify(user)),
-    
+// ─── SESSION (still uses sessionStorage - safe, not synced) ────
+const SESSION = {
+    getCurrentUser: () => JSON.parse(sessionStorage.getItem('currentUser')),
+    setCurrentUser: (user) => sessionStorage.setItem('currentUser', JSON.stringify(user)),
     logout: () => {
-        localStorage.setItem('currentUser', null);
+        sessionStorage.removeItem('currentUser');
         window.location.href = 'index.html';
+    }
+};
+
+// ─── USERS ─────────────────────────────────────────────────────
+const DB = {
+
+    generateId: () => '_' + Math.random().toString(36).substr(2, 9),
+
+    getCurrentUser: () => SESSION.getCurrentUser(),
+    setCurrentUser: (user) => SESSION.setCurrentUser(user),
+    logout: () => SESSION.logout(),
+
+    // Get all users
+    getUsers: async () => {
+        const snap = await getDocs(collection(db, USERS_COL));
+        return snap.docs.map(d => d.data());
     },
 
-    generateId: () => '_' + Math.random().toString(36).substr(2, 9)
+    // Add a new user
+    addUser: async (user) => {
+        await setDoc(doc(db, USERS_COL, user.id), user);
+    },
+
+    // Update a user field
+    updateUser: async (userId, updates) => {
+        await updateDoc(doc(db, USERS_COL, userId), updates);
+    },
+
+    // Delete a user
+    deleteUser: async (userId) => {
+        await deleteDoc(doc(db, USERS_COL, userId));
+    },
+
+    // Find user by phone
+    findUserByPhone: async (phone) => {
+        const q = query(collection(db, USERS_COL), where('phone', '==', phone));
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        return snap.docs[0].data();
+    },
+
+    // ─── PARCELS ───────────────────────────────────────────────
+    getParcels: async () => {
+        const snap = await getDocs(collection(db, PARCELS_COL));
+        return snap.docs.map(d => d.data());
+    },
+
+    addParcel: async (parcel) => {
+        await setDoc(doc(db, PARCELS_COL, parcel.id), parcel);
+    },
+
+    updateParcel: async (parcelId, updates) => {
+        await updateDoc(doc(db, PARCELS_COL, parcelId), updates);
+    },
+
+    getParcelsByPhone: async (phone) => {
+        const q = query(collection(db, PARCELS_COL), where('phone', '==', phone));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => d.data());
+    },
+
+    findParcelByBarcode: async (barcodeId) => {
+        const q = query(collection(db, PARCELS_COL),
+            where('barcodeId', '==', barcodeId),
+            where('status', '==', 'pending')
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        return snap.docs[0].data();
+    },
+
+    // ─── LOST & FOUND ──────────────────────────────────────────
+    getLostFound: async () => {
+        const snap = await getDocs(collection(db, LOSTFOUND_COL));
+        return snap.docs.map(d => d.data());
+    },
+
+    addLostFound: async (item) => {
+        await setDoc(doc(db, LOSTFOUND_COL, item.id), item);
+    },
+
+    updateLostFound: async (itemId, updates) => {
+        await updateDoc(doc(db, LOSTFOUND_COL, itemId), updates);
+    }
 };
+
+window.DB = DB;
+export default DB;
