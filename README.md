@@ -156,7 +156,7 @@ _Student dashboard_
 
 Satish Anshika  
 GitHub: https://github.com/Satish-Anshika  
-
+Website: https://gatelog-app.vercel.app/index.html
 ---
 
 ## ✨ Support
