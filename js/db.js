@@ -17,8 +17,8 @@ async function seedAdmin() {
     if (!adminSnap.exists()) {
         await setDoc(adminRef, {
             id: 'admin1',
-            phone: '0000000000',
-            password: 'admin',
+           phone: '9999999999',
+            password: 'Admin@GateLog123',
             role: 'admin',
             status: 'approved',
             name: 'Super Admin',
