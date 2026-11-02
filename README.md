@@ -151,7 +151,7 @@ _Lost or Found items_
 <img width="1911" height="845" alt="parcel verification" src="https://github.com/user-attachments/assets/beeb6b1a-a329-48d9-b039-db455c1c3b22" />
 _Student dashboard_
 
-#Sample login credentials:
+## Sample login credentials:
 - Phone : 9979979997
 - Password : User@1
 ---
