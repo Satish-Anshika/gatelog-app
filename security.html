@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Security Dashboard - GateLog</title>
     <link rel="stylesheet" href="css/style.css">
-    
+    <!-- Fast ZXing Multi-Format (QR & Barcode) Scanner -->
+    <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+    <!-- Fallback Html5Qrcode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -45,15 +48,29 @@
 
             <!-- Verify Pickup Section -->
             <div class="card glass-panel" style="grid-column: span 1;">
-                <h2 class="golden-text mb-2">Verify Pickup (Barcode)</h2>
-                <form id="verify-parcel-form">
-                    <div id="verify-msg" class="alert hidden"></div>
-                    
-                    <div class="form-group">
-                        <label>Scan / Enter Barcode ID</label>
-                        <input type="text" id="verify-barcode" class="form-control" required placeholder="e.g. BAR-123456">
+                <div class="flex justify-between align-center mb-2">
+                    <h2 class="golden-text" style="margin: 0;">Verify Pickup</h2>
+                    <button type="button" id="toggle-camera-btn" class="btn-outline btn-sm">📷 Scan Camera</button>
+                </div>
+                
+                <div id="scanner-container" class="hidden mb-2">
+                    <div style="position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: #000;">
+                        <video id="scanner-video" style="width: 100%; height: 260px; object-fit: cover; display: block; border-radius: 8px;"></video>
+                        <div id="qr-reader" style="width: 100%; display: none;"></div>
+                        <div class="scanner-laser-line"></div>
                     </div>
-                    <button type="submit" class="btn-primary" style="background-color: var(--success); color: #fff;">Mark as Delivered</button>
+                    <button type="button" id="stop-camera-btn" class="btn-outline btn-sm w-100 mt-2" style="justify-content: center;">✕ Close Camera</button>
+                </div>
+
+                <form id="verify-parcel-form">
+                    <div class="form-group">
+                        <label>Scan Barcode or Enter ID</label>
+                        <input type="text" id="verify-barcode" class="form-control" required placeholder="e.g. BAR-123456" autocomplete="off" autofocus>
+                        <small class="text-muted" style="display:block; margin-top:0.35rem; font-size:0.8rem;">
+                            Auto-verifies upon camera scan, scanner gun, or paste.
+                        </small>
+                    </div>
+                    <button type="submit" class="btn-primary" style="background-color: var(--success); color: #fff;">Verify & Mark as Delivered</button>
                 </form>
             </div>
         </div>
