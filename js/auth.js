@@ -94,7 +94,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             errorDiv.classList.remove('hidden');
             return;
         }
-        if (!user || user.password !== password) {
+        console.log("Entered phone:", phone);
+        console.log("User found:", user);
+        console.log("Password matches:", user?.password === password);
+
+        if (!user || user.password !== password)`` {
             errorDiv.textContent = "Invalid phone number or password.";
             errorDiv.classList.remove('hidden');
             return;
