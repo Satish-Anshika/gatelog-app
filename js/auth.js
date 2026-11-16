@@ -30,10 +30,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ─── REGISTER ──────────────────────────────────────────────
     document.getElementById('register-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const role     = document.querySelector('input[name="reg-role"]:checked').value;
-        const name     = document.getElementById('reg-name').value.trim();
-        const idCard   = document.getElementById('reg-idcard').value.trim();
-        const phone    = document.getElementById('reg-phone').value.trim();
+        const role = document.querySelector('input[name="reg-role"]:checked').value;
+        const name = document.getElementById('reg-name').value.trim();
+        const idCard = document.getElementById('reg-idcard').value.trim();
+        const phone = document.getElementById('reg-phone').value.trim();
         const password = document.getElementById('reg-password').value.trim();
         const errorDiv = document.getElementById('register-error');
 
@@ -74,15 +74,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ─── LOGIN ─────────────────────────────────────────────────
     document.getElementById('login-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const phone    = document.getElementById('login-phone').value.trim();
+        const phone = document.getElementById('login-phone').value.trim();
         const password = document.getElementById('login-password').value.trim();
         const errorDiv = document.getElementById('login-error');
         const successDiv = document.getElementById('login-success');
 
         successDiv.classList.add('hidden');
 
-        const user = await DB.findUserByPhone(phone);
+        let user;
 
+        try {
+            user = await DB.findUserByPhone(phone);
+        } catch (error) {
+            console.error("FIREBASE LOGIN ERROR:", error);
+
+            errorDiv.textContent =
+                `Firebase Error: ${error.code || error.message}`;
+
+            errorDiv.classList.remove('hidden');
+            return;
+        }
         if (!user || user.password !== password) {
             errorDiv.textContent = "Invalid phone number or password.";
             errorDiv.classList.remove('hidden');

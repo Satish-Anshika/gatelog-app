@@ -6,8 +6,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ─── COLLECTIONS ───────────────────────────────────────────────
-const USERS_COL     = 'users';
-const PARCELS_COL   = 'parcels';
+const USERS_COL = 'users';
+const PARCELS_COL = 'parcels';
 const LOSTFOUND_COL = 'lostFound';
 
 // ─── SESSION (uses sessionStorage - client state) ──────────────
