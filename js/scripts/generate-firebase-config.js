@@ -12,9 +12,17 @@ const config = {
     measurementId: process.env.FIREBASE_MEASUREMENT_ID
 };
 
-const missing = Object.entries(config)
-    .filter(([key, value]) => !value)
-    .map(([key]) => key);
+// Required Firebase configuration fields
+const required = [
+    'apiKey',
+    'authDomain',
+    'projectId',
+    'storageBucket',
+    'messagingSenderId',
+    'appId'
+];
+
+const missing = required.filter(key => !config[key]);
 
 if (missing.length > 0) {
     console.error('Missing Firebase environment variables:', missing);
@@ -22,7 +30,6 @@ if (missing.length > 0) {
 }
 
 const output = `
-// Generated during deployment. Do not commit this file.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -35,7 +42,7 @@ export { db };
 export default app;
 `;
 
-const outputPath = path.join(C: \Users\highn\gatelog - app\js\firebase - config.js);
+const outputPath = path.join(__dirname, '..', 'js', 'firebase-config.js');
 
 fs.writeFileSync(outputPath, output.trimStart());
 
