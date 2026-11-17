@@ -85,6 +85,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             user = await DB.findUserByPhone(phone);
+            console.log("Entered phone:", phone);
+            console.log("Found user:", user);
+            console.log("Password matches:", user?.password === password);
+            console.log("Account status:", user?.status);
         } catch (error) {
             console.error("FIREBASE LOGIN ERROR:", error);
 
@@ -94,11 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             errorDiv.classList.remove('hidden');
             return;
         }
-        console.log("Entered phone:", phone);
-        console.log("User found:", user);
-        console.log("Password matches:", user?.password === password);
-
-        if (!user || user.password !== password)`` {
+        if (!user || user.password !== password) {
             errorDiv.textContent = "Invalid phone number or password.";
             errorDiv.classList.remove('hidden');
             return;
